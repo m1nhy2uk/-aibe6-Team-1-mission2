@@ -3,9 +3,11 @@ package com.ll.framework.ioc;
 import com.ll.framework.ioc.annotations.Component;
 import org.reflections.Reflections;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,7 +22,19 @@ public class ApplicationContext {
 
     public void init() {
         Reflections reflections = new Reflections(basePackage);
-        Set<Class<?>> classes = reflections.getTypesAnnotatedWith(Component.class);
+
+        Set<Class<?>> componentAnnotations = reflections.getTypesAnnotatedWith(Component.class);
+
+        Set<Class<?>> classes = new HashSet<>();
+        for (Class<?> annotation : componentAnnotations) {
+            if (annotation.isAnnotation()) {
+                classes.addAll(reflections.getTypesAnnotatedWith(
+                        (Class<? extends Annotation>) annotation
+                ));
+            }
+        }
+
+        classes.addAll(reflections.getTypesAnnotatedWith(Component.class));
 
         classes.stream()
                 .filter(clazz -> !clazz.isInterface())
